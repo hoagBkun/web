@@ -1,0 +1,488 @@
+<!DOCTYPE html>
+<html lang="vi">
+    <head>
+        <meta charset="UTF-8" />
+        <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+        <title>Quản Lý Hình Thức Thi</title>
+        <script src="https://code.jquery.com/jquery-3.6.0.min.js"></script>
+        <style>
+            .interface-container {
+                background-color: #f0f0f0;
+                padding: 20px;
+                font-family: Arial, sans-serif;
+            }
+            .top-section {
+                display: flex;
+                justify-content: space-between;
+                margin-bottom: 10px;
+            }
+            .action-buttons {
+                position: relative;
+            }
+            .action-buttons button {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                margin-left: 10px;
+                cursor: pointer;
+            }
+            table {
+                width: 100%;
+                border-collapse: collapse;
+                table-layout: fixed;
+            }
+            th,
+            td {
+                border: 1px solid #ddd;
+                padding: 8px;
+                text-align: left;
+                box-sizing: border-box;
+            }
+            th {
+                background-color: #333f50;
+                color: white;
+                cursor: pointer;
+                text-align: center;
+            }
+            tbody tr:nth-child(odd) {
+                background-color: #f5f5f5;
+            }
+            tbody tr:nth-child(even) {
+                background-color: #ffffff;
+            }
+            .action-cell {
+                display: flex;
+                justify-content: space-around;
+            }
+            .add-new-form {
+                margin-top: 10px;
+                display: flex;
+                align-items: center;
+            }
+            .add-new-form input {
+                padding: 5px;
+                margin-right: 10px;
+                background-color: #ffffe0;
+                border: 1px solid #ddd;
+                box-sizing: border-box;
+            }
+            .add-new-form button {
+                background-color: #007bff;
+                color: white;
+                border: none;
+                padding: 5px 10px;
+                cursor: pointer;
+            }
+            button:hover {
+                opacity: 0.8;
+            }
+            .delete-icon:hover {
+                color: red;
+            }
+            /* Định kích thước cột */
+            th:nth-child(1),
+            td:nth-child(1) {
+                width: 10%;
+            }
+            th:nth-child(2),
+            td:nth-child(2) {
+                width: 30%;
+            }
+            th:nth-child(3),
+            td:nth-child(3) {
+                width: 10%;
+            }
+            th:nth-child(4),
+            td:nth-child(4) {
+                width: 15%;
+            }
+            th:nth-child(5),
+            td:nth-child(5) {
+                width: 20%;
+            }
+            th:nth-child(6),
+            td:nth-child(6) {
+                width: 15%;
+            }
+            /* Định kích thước textbox */
+            input[name="name"],
+            input[name="filter-name"] {
+                width: 100%;
+                max-width: calc(10% - 18px);
+            }
+            input[name="title"],
+            input[name="filter-title"] {
+                width: 100%;
+                max-width: calc(30% - 18px);
+            }
+            input[name="priority"],
+            input[name="filter-priority"] {
+                width: 100%;
+                max-width: calc(10% - 18px);
+            }
+            input[name="filter-last_modified_by"] {
+                width: 100%;
+                max-width: calc(15% - 18px);
+            }
+            input[name="filter-last_modified_date"] {
+                width: 100%;
+                max-width: calc(20% - 18px);
+            }
+            /* Dropdown và Form lọc */
+            .sort-options,
+            .filter-form {
+                display: none;
+                position: absolute;
+                background-color: white;
+                border: 1px solid #ddd;
+                padding: 15px;
+                z-index: 1;
+            }
+            .sort-options select {
+                margin-right: 10px;
+            }
+            .filter-form {
+                width: 400px;
+            }
+            .filter-form input {
+                margin-bottom: 10px;
+                padding: 8px;
+                display: block;
+                width: 100%;
+                box-sizing: border-box;
+            }
+            .filter-form button {
+                margin-right: 10px;
+                padding: 5px 10px;
+            }
+            /* Sử dụng CSS để hiển thị/ẩn dropdown và form lọc */
+            .action-buttons:hover .sort-options,
+            .action-buttons:hover .filter-form {
+                display: block;
+            }
+        </style>
+    </head>
+    <body>
+        <div class="interface-container">
+            <!-- Phần trên bảng -->
+            <div class="top-section">
+                <div></div>
+                <div class="action-buttons">
+                    <button id="filter-btn">Lọc 🔍</button>
+                    <button id="sort-btn">Sắp xếp ↓</button>
+                    <div id="sort-options" class="sort-options">
+                        <select id="sort-column">
+                            <option value="name">Việt Tắt</option>
+                            <option value="title">Tên Nhóm</option>
+                            <option value="priority">Ưu Tiên</option>
+                            <option value="last_modified_date">Ngày Sửa</option>
+                        </select>
+                        <select id="sort-order">
+                            <option value="asc">Tăng dần</option>
+                            <option value="desc">Giảm dần</option>
+                        </select>
+                        <button id="apply-sort">Áp dụng</button>
+                    </div>
+                    <div id="filter-form" class="filter-form">
+                        <input
+                            type="text"
+                            name="filter-name"
+                            placeholder="Việt Tắt"
+                        />
+                        <input
+                            type="text"
+                            name="filter-title"
+                            placeholder="Tên Nhóm"
+                        />
+                        <input
+                            type="number"
+                            name="filter-priority"
+                            placeholder="Ưu Tiên"
+                        />
+                        <input
+                            type="text"
+                            name="filter-last_modified_by"
+                            placeholder="Người Sửa"
+                        />
+                        <input
+                            type="text"
+                            name="filter-last_modified_date"
+                            placeholder="Ngày Sửa"
+                        />
+                        <button id="apply-filter">Lọc</button>
+                        <button id="clear-filter">Xóa bộ lọc</button>
+                    </div>
+                </div>
+            </div>
+
+            <!-- Bảng dữ liệu -->
+            <table id="exam-types-table">
+                <thead>
+                    <tr>
+                        <th data-sort="name">Việt Tắt</th>
+                        <th data-sort="title">Tên Nhóm</th>
+                        <th data-sort="priority">Ưu Tiên</th>
+                        <th>Người Sửa</th>
+                        <th data-sort="last_modified_date">Ngày Sửa</th>
+                        <th>Thao Tác</th>
+                    </tr>
+                </thead>
+                <tbody>
+                    <!-- Dữ liệu sẽ được thêm vào đây -->
+                </tbody>
+            </table>
+
+            <!-- Dòng nhập liệu -->
+            <div class="add-new-form">
+                <input
+                    type="text"
+                    id="new-name"
+                    name="name"
+                    placeholder="Việt Tắt"
+                />
+                <input
+                    type="text"
+                    id="new-title"
+                    name="title"
+                    placeholder="Tên Nhóm"
+                />
+                <input
+                    type="number"
+                    id="new-priority"
+                    name="priority"
+                    placeholder="Ưu Tiên"
+                />
+                <button id="add-btn">Thêm mới</button>
+            </div>
+        </div>
+        <script>
+            let currentSort = "id",
+                currentOrder = "asc",
+                currentEditingRow = null;
+            let allData = [],
+                filterApplied = false;
+
+            // Tải dữ liệu từ server
+            function loadAllExamTypes() {
+                $.get(
+                    "/get_exam_types",
+                    { sort: currentSort, order: currentOrder },
+                    (data) => {
+                        allData = data;
+                        applyFilters();
+                    }
+                );
+            }
+
+            // Áp dụng bộ lọc và hiển thị dữ liệu
+            function applyFilters() {
+                let data = filterApplied
+                    ? allData.filter(
+                          (entry) =>
+                              (!$('input[name="filter-name"]').val() ||
+                                  entry.name
+                                      .toLowerCase()
+                                      .includes(
+                                          $('input[name="filter-name"]')
+                                              .val()
+                                              .toLowerCase()
+                                      )) &&
+                              (!$('input[name="filter-title"]').val() ||
+                                  entry.title
+                                      .toLowerCase()
+                                      .includes(
+                                          $('input[name="filter-title"]')
+                                              .val()
+                                              .toLowerCase()
+                                      )) &&
+                              (!$('input[name="filter-priority"]').val() ||
+                                  entry.priority ==
+                                      $(
+                                          'input[name="filter-priority"]'
+                                      ).val()) &&
+                              (!$(
+                                  'input[name="filter-last_modified_by"]'
+                              ).val() ||
+                                  entry.last_modified_by
+                                      .toLowerCase()
+                                      .includes(
+                                          $(
+                                              'input[name="filter-last_modified_by"]'
+                                          )
+                                              .val()
+                                              .toLowerCase()
+                                      )) &&
+                              (!$(
+                                  'input[name="filter-last_modified_date"]'
+                              ).val() ||
+                                  entry.last_modified_date.includes(
+                                      $(
+                                          'input[name="filter-last_modified_date"]'
+                                      ).val()
+                                  ))
+                      )
+                    : allData;
+                renderTable(data);
+            }
+
+            // Hiển thị dữ liệu lên bảng
+            function renderTable(data) {
+                $("#exam-types-table tbody").empty();
+                data.forEach((entry) => {
+                    let row = $("<tr>").attr("data-id", entry.id);
+                    row.append($("<td>").text(entry.name));
+                    row.append($("<td>").text(entry.title));
+                    row.append($("<td>").text(entry.priority));
+                    row.append($("<td>").text(entry.last_modified_by));
+                    row.append($("<td>").text(entry.last_modified_date));
+                    row.append(
+                        $('<td class="action-cell">').append(
+                            '<span class="edit-icon">✏️</span><span class="delete-icon">X</span>'
+                        )
+                    );
+                    $("#exam-types-table tbody").append(row);
+                });
+            }
+
+            // Xử lý các sự kiện
+            $(document).ready(() => {
+                loadAllExamTypes();
+
+                // Sắp xếp khi click vào tiêu đề cột
+                $("#exam-types-table thead th").click(function () {
+                    let sort = $(this).data("sort");
+                    if (sort) {
+                        currentSort = sort;
+                        currentOrder =
+                            sort === currentSort && currentOrder === "asc"
+                                ? "desc"
+                                : "asc";
+                        loadAllExamTypes();
+                    }
+                });
+
+                // Thêm mới
+                $("#add-btn").click(() => {
+                    let name = $("#new-name").val(),
+                        title = $("#new-title").val(),
+                        priority = $("#new-priority").val();
+                    if (name && title && priority) {
+                        $.post(
+                            "/add_exam_type",
+                            { name, title, priority },
+                            (data) => {
+                                allData.push(data);
+                                applyFilters();
+                                $("#new-name, #new-title, #new-priority").val(
+                                    ""
+                                );
+                            }
+                        );
+                    } else {
+                        alert("Vui lòng điền đầy đủ các ô!");
+                    }
+                });
+
+                // Chỉnh sửa và xóa
+                $(document).on("click", ".edit-icon", function () {
+                    if (currentEditingRow) cancelEdit();
+                    currentEditingRow = $(this).closest("tr");
+                    currentEditingRow
+                        .find("td:not(:last)")
+                        .slice(0, 3)
+                        .each(function (i) {
+                            $(this)
+                                .data("original", $(this).text())
+                                .html(
+                                    i === 2
+                                        ? `<input name="${
+                                              ["name", "title", "priority"][i]
+                                          }" type="number" value="${$(
+                                              this
+                                          ).text()}">`
+                                        : `<input name="${
+                                              ["name", "title", "priority"][i]
+                                          }" value="${$(this).text()}">`
+                                );
+                        });
+                    currentEditingRow
+                        .find(".action-cell")
+                        .html(
+                            '<button class="update-btn">Update</button><button class="cancel-btn">Cancel</button>'
+                        );
+                });
+
+                $(document).on("click", ".update-btn", function () {
+                    let row = $(this).closest("tr"),
+                        id = row.data("id");
+                    let name = row.find("td:eq(0) input").val(),
+                        title = row.find("td:eq(1) input").val(),
+                        priority = row.find("td:eq(2) input").val();
+                    if (name && title && priority) {
+                        $.post(
+                            "/update_exam_type",
+                            { id, name, title, priority },
+                            (data) => {
+                                allData[
+                                    allData.findIndex((item) => item.id == id)
+                                ] = data;
+                                applyFilters();
+                                currentEditingRow = null;
+                            }
+                        );
+                    } else {
+                        alert("Vui lòng điền đầy đủ các ô!");
+                    }
+                });
+
+                $(document).on("click", ".cancel-btn", () => cancelEdit());
+
+                $(document).on("click", ".delete-icon", function () {
+                    if (confirm("Bạn có chắc muốn xóa dòng này không?")) {
+                        let id = $(this).closest("tr").data("id");
+                        $.post("/delete_exam_type", { id }, () => {
+                            allData = allData.filter((item) => item.id != id);
+                            applyFilters();
+                        });
+                    }
+                });
+
+                // Sắp xếp và lọc
+                $("#apply-sort").click(() => {
+                    currentSort = $("#sort-column").val();
+                    currentOrder = $("#sort-order").val();
+                    loadAllExamTypes();
+                });
+
+                $("#apply-filter").click(() => {
+                    filterApplied = true;
+                    applyFilters();
+                });
+
+                $("#clear-filter").click(() => {
+                    filterApplied = false;
+                    $("#filter-form input").val("");
+                    applyFilters();
+                });
+            });
+
+            function cancelEdit() {
+                if (currentEditingRow) {
+                    currentEditingRow
+                        .find("td:not(:last)")
+                        .slice(0, 3)
+                        .each(function () {
+                            $(this).text($(this).data("original"));
+                        });
+                    currentEditingRow
+                        .find(".action-cell")
+                        .html(
+                            '<span class="edit-icon">✏️</span><span class="delete-icon">X</span>'
+                        );
+                    currentEditingRow = null;
+                }
+            }
+        </script>
+    </body>
+</html>
